@@ -1,35 +1,13 @@
 function [data, tau2] = drone()
-
-% %% Grid
-% grid_min = [-8; -8; -5; -3; -3; -3]; % Lower corner of computation domain
-% grid_max = [8; 8; 5; 3; 3; 3];    % Upper corner of computation domain
-% N = 21*ones(6,1);         % Number of grid points per dimension
-% 
-% g = createGrid(grid_min, grid_max, N);
-% 
-% %% target set
-% R = 3;
-% data0 = shapeCylinder(g, [2, 4, 5, 6], [0; 0; 0; 0; 0; 0], R); %x-z
-% % data0 = shapeCylinder(g, [3, 4], [0; 0; 0; 0], R); %x-y
-
 %% Grid
 grid_min = [-8; -8; -5; -3]; % Lower corner of computation domain
 grid_max = [8; 8; 5; 3];    % Upper corner of computation domain
 N = 21*ones(4,1);         % Number of grid points per dimension
 
 g = createGrid(grid_min, grid_max, N);
-% %% Grid
-% grid_min = [-8; -8; -5; -3; -3]; % Lower corner of computation domain
-% grid_max = [8; 8; 5; 3; 3];    % Upper corner of computation domain
-% N = 21*ones(5,1);         % Number of grid points per dimension
-% 
-% g = createGrid(grid_min, grid_max, N);
 
 %% target set
 R = 3;
-% data0 = shapeCylinder(g, [1, 2], [0; 0; 0; 0; 0; 0], R); %z-k
-data0 = shapeCylinder(g, [1, 2, 5, 6], [0; 0; 0; 0; 0; 0], R); %z-k
-% data0 = shapeCylinder(g, [3,4], [0; 0; 0; 0; 0; 0], R); %z-k
 data0 = shapeCylinder(g, [2, 4], [0; 0; 0; 0], R); %x-z
 
 %% time vector
@@ -40,19 +18,15 @@ tau = t0:dt:tMax;
 
 %% problem parameters
 uMode = 'max';
-% dMode = 'min';
 
 %% Pack problem parameters
-% dCar = Quad6D([0,0,0,0,0,0]);
 dCar = Quad6D([0,0,0,0]);
-% dCar = Q6D_Q3D_Rel([0,0,0,0,0,0]);
 
 % Put grid and dynamic systems into schemeData
 schemeData.grid = g;
 schemeData.dynSys = dCar;
-schemeData.accuracy = 'veryHigh'; %set accuracy
+schemeData.accuracy = 'low'; %set accuracy
 schemeData.uMode = uMode;
-% schemeData.dMode = dMode;
 
 %% additive random noise
 % HJIextraArgs.addGaussianNoiseStandardDeviation = [0; 0; 0.5; 0];
@@ -69,7 +43,6 @@ HJIextraArgs.deleteLastPlot = true;
 HJIextraArgs.stopConverge = true;
 HJIextraArgs.makeVideo = true;
 
-
 [data, tau2] = HJIPDE_solve(data0, tau, schemeData, 'zero', HJIextraArgs);
 
 deriv = computeGradients(g, data);
@@ -79,33 +52,23 @@ compTraj = true;
 if compTraj
   
   %set the initial state
-%   xinit = [-3.76; 0.8; -1; -0.5];
-%     xinit = [-4.8; 0.8; -1; -0.5];
-%   xinit = [-6.4; 1.55; -3.5; -0.5];
-%   xinit = [-7.2; 2.1; -3; -0.5];
-%   xinit = [-3.76; 0.8; 0.5; -0.5];
-  xinit = [-3.76; 0.8; -1; -0.6];
   xinit = [-4.8; 0; -0.52; -0.6];
   
   %check if this initial state is in the BRS/BRT
   %value = eval_u(g, data, x)
   value = eval_u(g,data(:,:,:,:,end),xinit);
-%   keyboard
   if value <= 0 %if initial state is in BRS/BRT
     % find optimal trajectory
     
     dCar.x = xinit; %set initial state of the dubins car
-% plot 2
+
     TrajextraArgs.uMode = uMode; %set if control wants to min or max
     TrajextraArgs.dMode = 'max';
-%     TrajextraArgs.uMode = dMode; % is the opposite because of how the
-%     TrajextraArgs.dMode = uMode; % Quad4DCAvoid is defined 
     TrajextraArgs.visualize = true; %show plot
     TrajextraArgs.fig_num = 2; %figure number
     
     %we want to see the dimensions (x and z)
     TrajextraArgs.projDim = [1 0 1 0]; % computes optimal traj and visualizes
-%     TrajextraArgs.projDim = [1 1 0 0]; % x-y
     
     %flip data time points so we start from the beginning of time
     dataTraj = flip(data,4);
@@ -118,7 +81,6 @@ if compTraj
     figure(6)
     clf
     h = visSetIm(g, data(:,:,:,:,end));
-%     h.FaceAlpha = .3;
     hold on
     s = scatter3(xinit(1), xinit(2), xinit(3));
     s.SizeData = 70;
@@ -132,8 +94,7 @@ if compTraj
     xlim([-8 8])
     ylim([-8 8])
     % add the target set to that
-    [g2D, data2D] = proj(g, data0, [0 1 0 1]); %[0 0 1]
-%     [g2D, data2D] = proj(g, data0, [0 0 1 1]); % x-y
+    [g2D, data2D] = proj(g, data0, [0 1 0 1]);
     visSetIm(g2D, data2D, 'green');
     title('2D projection of the trajectory & target set')
     hold off
