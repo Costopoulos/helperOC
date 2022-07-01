@@ -25,7 +25,7 @@ dCar = Quad6D([0,0,0,0]);
 % Put grid and dynamic systems into schemeData
 schemeData.grid = g;
 schemeData.dynSys = dCar;
-schemeData.accuracy = 'low'; %set accuracy
+schemeData.accuracy = 'veryHigh'; %set accuracy
 schemeData.uMode = uMode;
 
 %% additive random noise
