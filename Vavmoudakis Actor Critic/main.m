@@ -46,10 +46,11 @@ xfstate = [-11.5 7.5]';  % final state
 p0 = x0state'*M*x0state;  % integral RL, initil control 0 % from equation 8
 
 % mine
-QStar0 = 1000;
+QStar0 = 648;%1000;
+uStar0 = -1.68;%-26;
 
 t_save_fnt = [];        % time vec
-x_save_fnt = [x0state;Wc0;Wa0;p0;QStar0]';%;xfstate]'; % build the initial cond state vec. This is x initially
+x_save_fnt = [x0state;Wc0;Wa0;p0;QStar0;uStar0]';%;xfstate]'; % build the initial cond state vec. This is x initially
 sigma_save_fnt = [];
 UkU_save = [];
 UkUdelay_save =[];
@@ -85,6 +86,7 @@ end
 % Qxu = [x(6) x(7)]';
 
 %% Plots
+% x1, x2 to show at the reachability DID happen; it reached xfstate
 figure 
 set(gca,'FontSize',26); hold on;
 plot(t_save_fnt,x_save_fnt(1:end-1,1),'LineWidth',2,'Color', 'b'); hold on;
@@ -131,3 +133,14 @@ plot(t_save_fnt,x_save_fnt(1:end-1,12),'-','LineWidth',2)
 xlabel('Time [s]');ylabel('Q*');
 grid on;
 hold off;
+% FUCK YALL, IT ASYMPTOTICALLY CONVERGES, BADABEEM BADABOOM BADABAM
+
+% u* from eq 15
+figure 
+set(gca,'FontSize',26)
+hold on;
+plot(t_save_fnt,x_save_fnt(1:end-1, 13),'-','LineWidth',2)
+xlabel('Time [s]');ylabel('u*');
+grid on;
+hold off;
+

@@ -45,6 +45,7 @@ dp =  0.5*((x(1:2)-xfstate)'*M*(x(1:2)-xfstate) -xdelay(1:2)*M*xdelay(1:2)' ...
 
 % mine
 QStar = Wc'*UkU;
+uStar = -inv(Quu)*Qux*U(1:2);
 
 % Approximation Errors 
 ec = p + Wc'*UkU - Wc'*UkUdelay; % Critic approximator error
@@ -69,4 +70,4 @@ end
 
 dx=A*[U(1);U(2)]+B*unew;
 uvec = [uvec;unew];
-dotx = [dx;dWc;dWa;dp;QStar]; % augmented state
+dotx = [dx;dWc;dWa;dp;QStar;uStar]; % augmented state
