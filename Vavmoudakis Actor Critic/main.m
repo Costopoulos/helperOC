@@ -11,7 +11,8 @@ global A B M R n m Pt xfstate ufinal Wcfinal% Dynamics, initial and final condit
 global T Tf % ODE paramters
 global alphaa alphac % GD parameters
 global amplitude percent % Noise parameters
-global uvec uDelayInterpFcn x1DelayInterpFcn x2DelayInterpFcn sigma UkU UkUdelay
+global uvec uDelayInterpFcn x1DelayInterpFcn x2DelayInterpFcn sigma
+
 A  = [-1 0;0 -2];
 B  = [0 1]';
 [n,m]=size(B); % States and controls
@@ -52,8 +53,6 @@ uStar0 = -1.68;%-26;
 t_save_fnt = [];        % time vec
 x_save_fnt = [x0state;Wc0;Wa0;p0;QStar0;uStar0]';%;xfstate]'; % build the initial cond state vec. This is x initially
 sigma_save_fnt = [];
-UkU_save = [];
-UkUdelay_save =[];
 
 uDelayInterpFcn = interp2PWC(0,0,1);
 x1DelayInterpFcn = interp2PWC(x_save_fnt(:,1),0,0);
@@ -70,9 +69,6 @@ for i=1:N
     t_save_fnt = [t_save_fnt;sol_fnt.x'];    % save time
     x_save_fnt = [x_save_fnt;sol_fnt.y'];    % save state
     sigma_save_fnt = [sigma_save_fnt sigma];
-    UkU_save = [UkU_save [sqrt(UkU(1)); sqrt(UkU(4))]];
-    UkUdelay_save =[UkUdelay_save [sqrt(UkUdelay(1)); sqrt(UkUdelay(4))]];
-    
    
     uDelayInterpFcn = interp2PWC(uvec,0,i*T);    % interpolate control input
     x1DelayInterpFcn = interp2PWC(x_save_fnt(:,1),0,i*T);
