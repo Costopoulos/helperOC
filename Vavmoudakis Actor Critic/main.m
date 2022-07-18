@@ -62,7 +62,7 @@ x2DelayInterpFcn = interp2PWC(x_save_fnt(:,2),0,0);
 for i=1:N
     options = odeset('RelTol',1e-5,'AbsTol',1e-5,'MaxStep',.01); % 'OutputFcn',@odeplot,
     tic;
-    sol_fnt = ode23(@baby_fnt,[(i-1)*T,i*T],x_save_fnt(end,:),options);
+    sol_fnt = ode45(@baby_fnt,[(i-1)*T,i*T],x_save_fnt(end,:),options);
     toc;
     
     t_save_fnt = [t_save_fnt;sol_fnt.x'];    % save time
