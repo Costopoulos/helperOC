@@ -50,12 +50,67 @@ initializations = {A; B; M; R; Pt; T; Tf; N; ...
                    alphaa; alphac; amplitude; ...
                    percent; ufinal; Wcfinal; delays};
 
+%% Set target
+[xVal, yVal] = circle(-11.5,7.5,4);%(0,0,8);
+figure 
+hold on;
+plot(xVal,yVal, 'r');
+plot(x0state(1),x0state(2),'.b')
+xlim([-20 40])
+ylim([-20 40])
+title('Initial Point(Blue) and Target(Red)')
+pause(0.1);
+hold off;
+
+% Retrieve actual points of the target
+[~, xPoints] = size(xVal);
+[~, yPoints] = size(yVal);
+
+allFinalStatesVector = [];
+
 %% Call Kontoudis' algorithm
-uvec = []; % when the reachability part comes here, before every Kontoudis()
-           % call we will reset uvec.
-[stateVector, time] = Kontoudis(initializations, x_save_fnt, xfstate);%), uvec);
+% tic
+for i=1:xPoints
+    xfstate(1) = xVal(i);
+    tic % around 38sec per j iteration => around 1900 sec to finish all, aka 31.6 mins
+    for j=1:yPoints
+        uvec = [];
+        xfstate(2) = yVal(j); % instead of xfstate = [xVal(i) yVal(j)]';
+        [stateVector, time] = Kontoudis(initializations, x_save_fnt, xfstate);
+        allFinalStatesVector = [allFinalStatesVector; stateVector(end, 1:2)];
+    end
+    toc
+end
+% toc
 
 %% Plots
+figure
+hold on;
+plot(xVal,yVal, 'r'); hold on; % target
+plot(x0state(1),x0state(2),'.b'); hold on; % initial State
+plot(allFinalStatesVector(1:end,1),allFinalStatesVector(1:end,2),'-b'); hold on;
+xlim([-20 40])
+ylim([-20 40])
+title('Reachable Set')
+grid on; hold off;
+
+figure
+hold on;
+plot(xVal,yVal, 'r'); hold on;
+plot(x0state(1),x0state(2),'.b'); hold on;
+% find closest point of the target to the initial point
+dist = sqrt((x0state(1) - xVal(:,1))^2 + (x0state(2) - yVal(:,1))^2);
+[minDist, indexOfMin] = min(dist);
+closestX = xVal(indexOfMin);
+closestY = yVal(indexOfMin);
+% actually plot
+plot(closestX, closestY, '-g'); hold on;
+line([x0state(1), closestX], [x0state(2), closestY], 'LineWidth', 2, 'Color', 'g');
+xlim([-20 40])
+ylim([-20 40])
+title('Optimal Trajectory')
+grid on; hold off;
+
 % x1, x2 to show at the reachability DID happen; it reached xfstate
 figure 
 set(gca,'FontSize',26); hold on;
@@ -113,4 +168,17 @@ plot(time,stateVector(1:end-1, 13),'-','LineWidth',2)
 xlabel('Time [s]');ylabel('u*');
 grid on;
 hold off;
+end
+
+function [xVal, yVal] = circle(x,y,r)
+% Creates a target circle and returns its points
+% x and y are the coordinates of the center of the circle
+% r is the radius of the circle
+% 0.01 is the angle step, bigger values will draw the circle faster but
+% you might notice imperfections (not very smooth)
+ang = linspace(0,2*pi,50); %50 % ang = 0:0.04:2*pi; % 158*158 points with that
+xp = r*cos(ang);
+yp = r*sin(ang);
+xVal = x+xp;
+yVal = y+yp;
 end
