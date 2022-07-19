@@ -1,6 +1,5 @@
 function reachabilityMain()
 global uvec
-% Clc all
 close all;
 clc;
 
@@ -62,26 +61,20 @@ title('Initial Point(Blue) and Target(Red)')
 pause(0.1);
 hold off;
 
-% Retrieve actual points of the target
-[~, xPoints] = size(xVal);
-[~, yPoints] = size(yVal);
+% Retrieve actual number of points of the target
+[~, xPoints] = size(xVal); % no need for yPoints cause they are the same
 
 allFinalStatesVector = [];
 
 %% Call Kontoudis' algorithm
-% tic
 for i=1:xPoints
-    xfstate(1) = xVal(i);
-    tic % around 38sec per j iteration => around 1900 sec to finish all, aka 31.6 mins
-    for j=1:yPoints
-        uvec = [];
-        xfstate(2) = yVal(j); % instead of xfstate = [xVal(i) yVal(j)]';
-        [stateVector, time] = Kontoudis(initializations, x_save_fnt, xfstate);
-        allFinalStatesVector = [allFinalStatesVector; stateVector(end, 1:2)];
-    end
+    xfstate = [xVal(i) yVal(i)]';
+    tic
+    uvec = [];
+    [stateVector, time] = Kontoudis(initializations, x_save_fnt, xfstate);
+    allFinalStatesVector = [allFinalStatesVector; stateVector(end, 1:2)];
     toc
 end
-% toc
 
 %% Plots
 figure
@@ -97,10 +90,11 @@ grid on; hold off;
 figure
 hold on;
 plot(xVal,yVal, 'r'); hold on;
+plot(allFinalStatesVector(1:end,1),allFinalStatesVector(1:end,2),'-b'); hold on;
 plot(x0state(1),x0state(2),'.b'); hold on;
 % find closest point of the target to the initial point
-dist = sqrt((x0state(1) - xVal(:,1))^2 + (x0state(2) - yVal(:,1))^2);
-[minDist, indexOfMin] = min(dist);
+dist = sqrt((x0state(1) - allFinalStatesVector(:,1)).^2 + (x0state(2) - allFinalStatesVector(:,2)).^2);
+[~, indexOfMin] = min(dist);
 closestX = xVal(indexOfMin);
 closestY = yVal(indexOfMin);
 % actually plot
@@ -108,7 +102,24 @@ plot(closestX, closestY, '-g'); hold on;
 line([x0state(1), closestX], [x0state(2), closestY], 'LineWidth', 2, 'Color', 'g');
 xlim([-20 40])
 ylim([-20 40])
-title('Optimal Trajectory')
+title('Optimal Trajectory to Reachable Set = Target')
+grid on; hold off;
+
+figure
+hold on;
+plot(xVal,yVal, 'r'); hold on;
+plot(x0state(1),x0state(2),'.b'); hold on;
+% find closest point of the target to the initial point
+dist = sqrt((x0state(1) - xVal(:,1))^2 + (x0state(2) - yVal(:,1))^2);
+[~, indexOfMin] = min(dist);
+closestX = xVal(indexOfMin);
+closestY = yVal(indexOfMin);
+% actually plot
+plot(closestX, closestY, '-g'); hold on;
+line([x0state(1), closestX], [x0state(2), closestY], 'LineWidth', 2, 'Color', 'g');
+xlim([-20 40])
+ylim([-20 40])
+title('Optimal Trajectory to Target = Reachable Set')
 grid on; hold off;
 
 % x1, x2 to show at the reachability DID happen; it reached xfstate
@@ -158,7 +169,6 @@ plot(time,stateVector(1:end-1,12),'-','LineWidth',2)
 xlabel('Time [s]');ylabel('Q*');
 grid on;
 hold off;
-% FUCK YALL, IT ASYMPTOTICALLY CONVERGES, BADABEEM BADABOOM BADABAM
 
 % u* from eq 15
 figure 
@@ -176,7 +186,7 @@ function [xVal, yVal] = circle(x,y,r)
 % r is the radius of the circle
 % 0.01 is the angle step, bigger values will draw the circle faster but
 % you might notice imperfections (not very smooth)
-ang = linspace(0,2*pi,50); %50 % ang = 0:0.04:2*pi; % 158*158 points with that
+ang = linspace(0,2*pi,100);
 xp = r*cos(ang);
 yp = r*sin(ang);
 xVal = x+xp;

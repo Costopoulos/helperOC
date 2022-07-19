@@ -11,9 +11,7 @@ time = [];
 options = odeset('RelTol',1e-5,'AbsTol',1e-5,'MaxStep',.01);
 
 for i=1:N
-%     tic;
     sol_fnt = ode45(@(t,x) actorCritic(t,x,xfstate,initializations),[(i-1)*T,i*T],currentState(end,:),options);
-%     toc;
     
     time = [time;sol_fnt.x'];    % save time
     currentState = [currentState;sol_fnt.y'];    % save state
