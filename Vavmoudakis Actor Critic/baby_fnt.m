@@ -52,7 +52,10 @@ ec = p + Wc'*UkU - Wc'*UkUdelay; % Critic approximator error
 ecfinal = Pfinal - Wcfinal'*UkUfinal; % Critic approximator error final state
 ea = Wa'*U(1:2)+.5*inv(Quu)*Qux*U(1:2); % Actor approximator error 
 % or x(1:2) - xfstate instead of U(1:2) % or ud instead of Wa'*U(1:2)
-
+% BASICALLY, looking at eq30, ud = Wa'*U(1:2) = Wa'(x(1:2)-xfstate) wants
+% to reach u* = inv(Quu)*Qux*U(1:2), that's why ea is defined like this.
+% ud is slowly getting to u*, aka
+% Wa'*U(1:2) -> inv(Quu)*Qux*U(1:2)
 
 % critic update
 dWc = -alphac*((sigma./(sigma'*sigma+1).^2)*ec'+(UkUfinal./((UkUfinal'*UkUfinal+1).^2)*ecfinal')); % eq 22
