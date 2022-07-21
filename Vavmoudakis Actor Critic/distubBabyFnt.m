@@ -4,7 +4,7 @@ global percent amplitude Tf Pt UkUfinal Pfinal xfstate xfstateDist ufinal wfinal
 global uDelayInterpFcn wDelayInterpFcn x1DelayInterpFcn x2DelayInterpFcn
 global T uvec wvec
 global M R F
-global alphaa alphac
+global alphaa alphaa2 alphac
 global A B C Qxx Quu Qxu Qww Qxw sigma UkU UkUdelay
 
 Wc = [x(3);x(4);x(5);x(6);x(7);x(8);x(9);x(10);x(11);x(12)]; %critic
@@ -81,10 +81,10 @@ dWc = -alphac*((sigma./(sigma'*sigma+1).^2)*ec'+(UkUfinal./((UkUfinal'*UkUfinal+
 
 % actor update
 dWa1 = -alphaa*U(1:2)*ea1'; % equation 23
-dWa2 = -alphaa*U(1:2)*ea2'; % equation 23
+dWa2 = -alphaa2*U(1:2)*ea2'; % equation 23
 dWa = [dWa1; dWa2];
 % dWa = max([dWa1 dWa2]);
-% dWa = -alphaa*U(1:2).*ea';
+% dWa = -alphaa*(dWa1+dWa2).*U(1:2);
 
 % Persistent Excitation
 if t<=(percent/100)*Tf

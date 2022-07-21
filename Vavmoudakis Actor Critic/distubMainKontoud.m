@@ -9,11 +9,9 @@ clc;
 %% Dynamics and System Parameters
 global A B C M R F n m Pt xfstate xfstateDist ufinal wfinal Wcfinal% Dynamics, initial and final conditions
 global T Tf % ODE paramters
-global alphaa alphac % GD parameters
+global alphaa alphaa2 alphac % GD parameters
 global amplitude percent % Noise parameters
 global uvec wvec uDelayInterpFcn wDelayInterpFcn x1DelayInterpFcn x2DelayInterpFcn
-
-avoid = true;
 
 A  = [-1 0;0 -2];
 B  = [0 1]';
@@ -32,6 +30,7 @@ N  = Tf/T; % Number of simulation rounds
 % Gradient descent parameters
 alphac=90;
 alphaa=1.5;
+alphaa2=1.5;
 
 % Noise paramaters
 amplitude = .1; % changes the amplitude of the PE (kyriakos pe)
