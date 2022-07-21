@@ -107,67 +107,15 @@ hold on;
 plot(xVal,yVal, 'r'); hold on;
 plot(allFinalStatesVector(1:end,1),allFinalStatesVector(1:end,2),'-b'); hold on;
 plot(x0state(1),x0state(2),'.b'); hold on;
-% find closest point of the target to the initial point
-dist = sqrt((x0state(1) - allFinalStatesVector(:,1)).^2 + (x0state(2) - allFinalStatesVector(:,2)).^2);
-[~, indexOfMin] = min(dist);
-% indexOfMin contains the information of which batch went closest to the
-% reachable set
-closestX = allFinalStatesVector(indexOfMin, 1);
-closestY = allFinalStatesVector(indexOfMin, 2);
+% Find Optimal Trajectory
+[closestPoint, trajectoryPlot] = findOptimalTrajectory(x0state,...
+                                 allTrajectoriesVector,allFinalStatesVector);
 % actually plot
-plot(closestX, closestY, '.y'); hold on;
-trajectoryPlot = [];
-% find which batch to plot
-start = 1;
-batchCount = 0;
-for i=1:length(allTrajectoriesVector)
-    if (allTrajectoriesVector(i,:) == 0)
-        batchCount = batchCount + 1;
-        if batchCount == indexOfMin
-            trajectoryPlot = [trajectoryPlot; allTrajectoriesVector(start:i-1, :)];
-            break;
-        end
-        start = i+1;
-    end
-end
+plot(closestPoint, '.y'); hold on;
 plot(trajectoryPlot(1:end,1), trajectoryPlot(1:end,2), 'Color', 'g'); hold on;
 xlim([-20 40])
 ylim([-20 40])
 title('Optimal Trajectory to Reachable Set')
-grid on; hold off;
-
-figure
-hold on;
-plot(allFinalStatesVector(1:end,1),allFinalStatesVector(1:end,2),'-b'); hold on;
-plot(x0state(1),x0state(2),'.b'); hold on;
-% find closest point of the target to the initial point
-dist = sqrt((x0state(1) - allFinalStatesVector(:,1)).^2 + (x0state(2) - allFinalStatesVector(:,2)).^2);
-[~, indexOfMin] = min(dist);
-closestX = allFinalStatesVector(indexOfMin, 1);
-closestY = allFinalStatesVector(indexOfMin, 2);
-% actually plot
-plot(closestX, closestY, '.m'); hold on;
-line([x0state(1), closestX], [x0state(2), closestY], 'Color', 'g');
-xlim([-20 40])
-ylim([-20 40])
-title('Line Trajectory to Reachable Set')
-grid on; hold off;
-
-figure
-hold on;
-plot(xVal,yVal, 'r'); hold on;
-plot(x0state(1),x0state(2),'.b'); hold on;
-% find closest point of the target to the initial point
-dist = sqrt((x0state(1) - xVal(:,1))^2 + (x0state(2) - yVal(:,1))^2);
-[~, indexOfMin] = min(dist);
-closestX = xVal(indexOfMin);
-closestY = yVal(indexOfMin);
-% actually plot
-plot(closestX, closestY, '.m'); hold on;
-line([x0state(1), closestX], [x0state(2), closestY], 'Color', 'g');
-xlim([-20 40])
-ylim([-20 40])
-title('Line Trajectory to Target')
 grid on; hold off;
 
 % x1, x2 to show at the reachability DID happen; it reached xfstate
@@ -239,4 +187,39 @@ xp = r*cos(ang);
 yp = r*sin(ang);
 xVal = x+xp;
 yVal = y+yp;
+end
+
+function [closestPoint, trajectoryToPlot] = findOptimalTrajectory(initState,...
+                                            trajectoriesVector, ...
+                                            finalStateVector)
+% Function to return the optimal trajectory to the reachable set
+% param{initState} is the initial state from which we are starting
+% param{trajectoriesVector} is the vector that contains all trajectories from the
+% initState to each xfstate
+% param{finalStateVector} is the vector that contains all the final states of the
+% trajectories in trajectoriesVector
+
+% find closest point of the target to the initial point
+dist = sqrt((initState(1) - finalStateVector(:,1)).^2 + (initState(2) - finalStateVector(:,2)).^2);
+[~, indexOfMin] = min(dist);
+% indexOfMin contains the information of which batch went closest to the
+% reachable set
+closestX = finalStateVector(indexOfMin, 1);
+closestY = finalStateVector(indexOfMin, 2);
+closestPoint = [closestX closestY];
+
+trajectoryPlot = [];
+% find which batch to plot
+start = 1;
+batchCount = 0;
+for i=1:length(trajectoriesVector)
+    if (trajectoriesVector(i,:) == 0)
+        batchCount = batchCount + 1;
+        if batchCount == indexOfMin
+            trajectoryToPlot = [trajectoryPlot; trajectoriesVector(start:i-1, :)];
+            break;
+        end
+        start = i+1;
+    end
+end
 end
