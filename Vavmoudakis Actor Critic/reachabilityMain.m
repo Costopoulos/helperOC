@@ -64,7 +64,11 @@ hold off;
 % Retrieve actual number of points of the target
 [~, xPoints] = size(xVal); % no need for yPoints cause they are the same
 
-allFinalStatesVector = [];
+allTrajectoriesVector = [];
+batchEndSignifier = zeros(1,2); 
+% Append zeros to the end of each batch in order to know when a trajectory 
+% for a specific xfstate ended. We only care for the states of each 
+% stateVector
 
 %% Call Kontoudis' algorithm
 for i=1:xPoints
@@ -72,9 +76,20 @@ for i=1:xPoints
     tic
     uvec = [];
     [stateVector, time] = Kontoudis(initializations, x_save_fnt, xfstate);
-    allFinalStatesVector = [allFinalStatesVector; stateVector(end, 1:2)];
+    allTrajectoriesVector = [allTrajectoriesVector; stateVector(:,1:2); batchEndSignifier];
     toc
 end
+
+%% Pre-Plot
+% create the vector with all the final points in order to have the
+% reachable set
+allFinalStatesVector = [];
+for i=1:length(allTrajectoriesVector)
+    if (allTrajectoriesVector(i,:) == 0) % if batchEndSignifier is found
+        allFinalStatesVector = [allFinalStatesVector; allTrajectoriesVector(i-1,:)];
+    end
+end
+
 
 %% Plots
 figure
@@ -95,14 +110,47 @@ plot(x0state(1),x0state(2),'.b'); hold on;
 % find closest point of the target to the initial point
 dist = sqrt((x0state(1) - allFinalStatesVector(:,1)).^2 + (x0state(2) - allFinalStatesVector(:,2)).^2);
 [~, indexOfMin] = min(dist);
-closestX = xVal(indexOfMin);
-closestY = yVal(indexOfMin);
+% indexOfMin contains the information of which batch went closest to the
+% reachable set
+closestX = allFinalStatesVector(indexOfMin, 1);
+closestY = allFinalStatesVector(indexOfMin, 2);
 % actually plot
-plot(closestX, closestY, '-g'); hold on;
-line([x0state(1), closestX], [x0state(2), closestY], 'LineWidth', 2, 'Color', 'g');
+plot(closestX, closestY, '.y'); hold on;
+trajectoryPlot = [];
+% find which batch to plot
+start = 1;
+batchCount = 0;
+for i=1:length(allTrajectoriesVector)
+    if (allTrajectoriesVector(i,:) == 0)
+        batchCount = batchCount + 1;
+        if batchCount == indexOfMin
+            trajectoryPlot = [trajectoryPlot; allTrajectoriesVector(start:i-1, :)];
+            break;
+        end
+        start = i+1;
+    end
+end
+plot(trajectoryPlot(1:end,1), trajectoryPlot(1:end,2), 'Color', 'g'); hold on;
 xlim([-20 40])
 ylim([-20 40])
-title('Optimal Trajectory to Reachable Set = Target')
+title('Optimal Trajectory to Reachable Set')
+grid on; hold off;
+
+figure
+hold on;
+plot(allFinalStatesVector(1:end,1),allFinalStatesVector(1:end,2),'-b'); hold on;
+plot(x0state(1),x0state(2),'.b'); hold on;
+% find closest point of the target to the initial point
+dist = sqrt((x0state(1) - allFinalStatesVector(:,1)).^2 + (x0state(2) - allFinalStatesVector(:,2)).^2);
+[~, indexOfMin] = min(dist);
+closestX = allFinalStatesVector(indexOfMin, 1);
+closestY = allFinalStatesVector(indexOfMin, 2);
+% actually plot
+plot(closestX, closestY, '.m'); hold on;
+line([x0state(1), closestX], [x0state(2), closestY], 'Color', 'g');
+xlim([-20 40])
+ylim([-20 40])
+title('Line Trajectory to Reachable Set')
 grid on; hold off;
 
 figure
@@ -115,11 +163,11 @@ dist = sqrt((x0state(1) - xVal(:,1))^2 + (x0state(2) - yVal(:,1))^2);
 closestX = xVal(indexOfMin);
 closestY = yVal(indexOfMin);
 % actually plot
-plot(closestX, closestY, '-g'); hold on;
-line([x0state(1), closestX], [x0state(2), closestY], 'LineWidth', 2, 'Color', 'g');
+plot(closestX, closestY, '.m'); hold on;
+line([x0state(1), closestX], [x0state(2), closestY], 'Color', 'g');
 xlim([-20 40])
 ylim([-20 40])
-title('Optimal Trajectory to Target = Reachable Set')
+title('Line Trajectory to Target')
 grid on; hold off;
 
 % x1, x2 to show at the reachability DID happen; it reached xfstate
