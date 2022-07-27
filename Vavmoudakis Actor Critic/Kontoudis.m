@@ -1,4 +1,4 @@
-function [currentState, time] = Kontoudis(initializations, currentState, xfstate)%, uvec)
+function [currentState, time] = Kontoudis(initializations, currentState, finalStatesCell, reachAvoid)
 global uvec
 global wvec
 
@@ -12,7 +12,7 @@ time = [];
 options = odeset('RelTol',1e-5,'AbsTol',1e-5,'MaxStep',.01);
 
 for i=1:N
-    sol_fnt = ode45(@(t,x) actorCritic(t,x,xfstate,initializations),[(i-1)*T,i*T],currentState(end,:),options);
+    sol_fnt = ode45(@(t,x) actorCritic(t,x,finalStatesCell,reachAvoid,initializations),[(i-1)*T,i*T],currentState(end,:),options);
     
     time = [time;sol_fnt.x'];    % save time
     currentState = [currentState;sol_fnt.y'];    % save state

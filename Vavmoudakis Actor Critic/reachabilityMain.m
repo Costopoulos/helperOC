@@ -5,12 +5,40 @@ close all;
 clc;
 
 %% Reach-Avoid or Only Reach?
+reach = false;
 avoid = true;
+
+game = reach & avoid;
+
+% assert
+assert (reach | avoid, 'Choose reach, avoid, or reach-avoid!');
+
+if reach && avoid
+    disp('Running reach-avoid')
+else
+    if reach
+        disp('Running reachability')
+    else 
+        disp('Running avoidance')
+    end
+end
 
 %% Dynamics and System Parameters
 A  = [-1 0;0 -2];
 B  = [0 1]';
-C = [0 1]';
+if ((avoid) && (~game))
+%     C = [6 5]';
+%     C = [0 10]';
+%     C = [5 2]';
+    C = [10 10]';
+else
+    C = [0 1]';
+end
+if game
+    A = [-1 0; 0 -1];
+    B = [0 4]';
+    C = [0 -4]';
+end
 [~,m] = size(B); % States and controls
 M  = diag([1,.1]);
 R  = .1;
@@ -32,7 +60,6 @@ percent = 50;
 
 Wc0 = [rand(8,1);10*rand(2,1)]; % critic weights
 Wa0 = .5*ones(4,1); % actor weights
-u0= rand(m);
 ufinal = 0.001;
 wfinal = 0.001;
 Wcfinal = 12*ones(10,1);
@@ -40,14 +67,20 @@ Wcfinal = 12*ones(10,1);
 % Initial condition of the augmented system 
 x0state = [32 -15]';  % initial state
 xfstate = [-11.5 7.5]';  % final state
-% global xfstateDist
-% xfstateDist = [8 6]';
 
+obstacleCenter = [8 6]';
+if ((avoid) && (~reach)) % only avoid
+    xfstateDist = [-11.5 7.5]'; % final state of Disturbance is the same as
+                                % the actual final state in avoid mode
+else % reach-avoid
+    xfstateDist = obstacleCenter; % in reach-avoid/reach it's the obstacle
+                                  % center
+end
 p0 = x0state'*M*x0state;  % integral RL, initil control 0 % from equation 8
 
 QStar0 = rand(m);
 uStar0 = rand(m);
-wStar0 = rand(m);
+wStar0 = uStar0;%rand(m);
 
 x_save_fnt = [x0state;Wc0;Wa0;p0;QStar0;uStar0;wStar0]'; % build the initial cond state vec. This is x initially
 
@@ -61,25 +94,28 @@ initializations = {A; B; C; M; R; F; Pt; T; Tf; N; ...
                    alphaa; alphac; amplitude; ...
                    percent; ufinal; wfinal; ...
                    Wcfinal; delays};
+reachAvoid = {reach; avoid};
+xfstatesCell = {xfstate; xfstateDist};
 
 %% Set target and potential obstacle
 [xVal, yVal] = circle(-11.5,7.5,4);%(0,0,8);
-if avoid
+if game % reach-avoid
 %     [xObs, yObs] = circle(8,12,4); % doesn't get in the way
-    [xObs, yObs] = circle(8,8,4); % clutch save
+%     [xObs, yObs] = circle(8,8,4); % clutch save
 %     [xObs, yObs] = circle(8,6,4);
+    [xObs, yObs] = circle(obstacleCenter(1), obstacleCenter(2) ,4);
 end
 figure 
 hold on;
 plot(xVal,yVal, 'r');
-if avoid
+if game
     plot(xObs,yObs,'m');
 end
 plot(x0state(1),x0state(2),'.b')
 xlim([-20 40])
 ylim([-20 40])
 title('Initial Point(Blue) and Target(Red)')
-if avoid
+if game
     title('Initial Point(Blue), Target(Red), Obstacle(Magenta)')
 end
 pause(0.1);
@@ -97,10 +133,14 @@ batchEndSignifier = zeros(1,2);
 %% Call Kontoudis' algorithm
 for i=1:xPoints
     xfstate = [xVal(i) yVal(i)]';
+    xfstatesCell{1} = xfstate;
+    if ((avoid) && (~game))
+        xfstatesCell{2} = xfstate;
+    end
     tic
     uvec = [];
     wvec = [];
-    [stateVector, time] = Kontoudis(initializations, x_save_fnt, xfstate);
+    [stateVector, time] = Kontoudis(initializations, x_save_fnt, xfstatesCell, reachAvoid);
     allTrajectoriesVector = [allTrajectoriesVector; stateVector(:,1:2); batchEndSignifier];
     toc
 end
@@ -120,7 +160,7 @@ end
 figure
 hold on;
 plot(xVal,yVal, 'r'); hold on; % target
-if avoid
+if game
     plot(xObs,yObs, 'm'); hold on;
 end
 plot(x0state(1),x0state(2),'.b'); hold on; % initial State
@@ -130,24 +170,26 @@ ylim([-20 40])
 title('Reachable Set')
 grid on; hold off;
 
-figure
-hold on;
-plot(xVal,yVal, 'r'); hold on;
-if avoid
-    plot(xObs,yObs, 'm'); hold on;
+if (((reach)&&(~avoid))||((reach)&&(avoid))) % if we don't have only avoid
+    figure
+    hold on;
+    plot(xVal,yVal, 'r'); hold on;
+    if avoid
+        plot(xObs,yObs, 'm'); hold on;
+    end
+    plot(allFinalStatesVector(1:end,1),allFinalStatesVector(1:end,2),'-b'); hold on;
+    plot(x0state(1),x0state(2),'.b'); hold on;
+    % Find Optimal Trajectory
+    [closestPoint, trajectoryPlot] = findOptimalTrajectory(x0state,...
+                                     allTrajectoriesVector,allFinalStatesVector);
+    % actually plot
+    plot(closestPoint, '.y'); hold on;
+    plot(trajectoryPlot(1:end,1), trajectoryPlot(1:end,2), 'Color', 'g'); hold on;
+    xlim([-20 40])
+    ylim([-20 40])
+    title('Optimal Trajectory to Reachable Set')
+    grid on; hold off;
 end
-plot(allFinalStatesVector(1:end,1),allFinalStatesVector(1:end,2),'-b'); hold on;
-plot(x0state(1),x0state(2),'.b'); hold on;
-% Find Optimal Trajectory
-[closestPoint, trajectoryPlot] = findOptimalTrajectory(x0state,...
-                                 allTrajectoriesVector,allFinalStatesVector);
-% actually plot
-plot(closestPoint, '.y'); hold on;
-plot(trajectoryPlot(1:end,1), trajectoryPlot(1:end,2), 'Color', 'g'); hold on;
-xlim([-20 40])
-ylim([-20 40])
-title('Optimal Trajectory to Reachable Set')
-grid on; hold off;
 
 % x1, x2 to show at the reachability DID happen; it reached xfstate
 figure 
@@ -222,7 +264,7 @@ function [xVal, yVal] = circle(x,y,r)
 % r is the radius of the circle
 % 0.01 is the angle step, bigger values will draw the circle faster but
 % you might notice imperfections (not very smooth)
-ang = linspace(0,2*pi,5);
+ang = linspace(0,2*pi,50);
 xp = r*cos(ang);
 yp = r*sin(ang);
 xVal = x+xp;

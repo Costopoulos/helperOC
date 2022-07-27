@@ -1,4 +1,4 @@
-function [dotx] = actorCritic(t,x, xfstate, params)%, uvec)
+function [dotx] = actorCritic(t,x, finalStatesCell, reachAvoid, params)%, uvec)
 global uvec
 global wvec
 
@@ -20,6 +20,10 @@ ufinal = params(end-3);
 wfinal = params(end-2);
 Wcfinal = params(end-1);
 delays = params(end);
+reach = reachAvoid(1);
+avoid = reachAvoid(2);
+xfstate = finalStatesCell(1);
+xfstateDist = finalStatesCell(2);
 % Note that every variable above is a struct, thus we get its value by
 % using the {} operator or by using cell2mat
 A = cell2mat(A);
@@ -32,6 +36,10 @@ T = cell2mat(T);
 Wcfinal = cell2mat(Wcfinal);
 ufinal = cell2mat(ufinal);
 wfinal = cell2mat(wfinal);
+reach = cell2mat(reach);
+avoid = cell2mat(avoid);
+xfstate = cell2mat(xfstate);
+xfstateDist = cell2mat(xfstateDist);
 
 uDelayInterpFcn = delays{1, 1}(1);
 wDelayInterpFcn = delays{1, 1}(2);
@@ -50,9 +58,11 @@ Pfinal = 0.5*(xfstate)'*Pt{1}*(xfstate); % equation 19
 
 % Update control
 ud = Wa(1:2)'*(x(1:2)-xfstate); % equation 17
-wd = Wa(3:4)'*(x(1:2)-xfstate);
-% global xfstateDist
-% wd = Wa(3:4)'*(x(1:2)-xfstateDist);
+if ~avoid % reach
+    wd = Wa(3:4)'*(x(1:2)-xfstate);  
+else % avoid, reach-avoid
+    wd = Wa(3:4)'*(x(1:2)-xfstateDist);
+end
 
 % State and control delays
 uddelay = ppval(uDelayInterpFcn{1},t-T);
