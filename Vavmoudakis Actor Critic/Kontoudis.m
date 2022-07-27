@@ -1,9 +1,10 @@
 function [currentState, time] = Kontoudis(initializations, currentState, xfstate)%, uvec)
 global uvec
+global wvec
 
 %% Decrypt Init Vars
-T = initializations{6};
-N = initializations{8};
+T = initializations{8};
+N = initializations{10};
 
 time = [];
 
@@ -17,9 +18,10 @@ for i=1:N
     currentState = [currentState;sol_fnt.y'];    % save state
     
     uDelayInterpFcn = interp2PWC(uvec,0,i*T);    % interpolate control input
+    wDelayInterpFcn = interp2PWC(wvec,0,i*T);
     x1DelayInterpFcn = interp2PWC(currentState(:,1),0,i*T);
     x2DelayInterpFcn = interp2PWC(currentState(:,2),0,i*T);
-    delays = {uDelayInterpFcn; x1DelayInterpFcn; x2DelayInterpFcn};
+    delays = {uDelayInterpFcn; wDelayInterpFcn; x1DelayInterpFcn; x2DelayInterpFcn};
     initializations(end) = {delays};
 end
 end
